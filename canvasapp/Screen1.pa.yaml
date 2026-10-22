@@ -1,0 +1,623 @@
+Screens:
+  Screen1:
+    Properties:
+      Fill: =ThBg
+      LoadingSpinnerColor: =ThPrimary
+      OnVisible: |-
+        =UpdateContext({locEntryError: "", locSignInError: "", locEdit: Blank()}); If(!IsBlank(varMe), Refresh('Time Entries'))
+    Children:
+      - conLogAppBar:
+          Control: GroupContainer
+          Variant: AutoLayout
+          Properties:
+            DropShadow: =DropShadow.None
+            Fill: =ThAppBar
+            Height: =64
+            LayoutAlignItems: =LayoutAlignItems.Center
+            LayoutDirection: =LayoutDirection.Horizontal
+            LayoutGap: =16
+            PaddingLeft: =24
+            PaddingRight: =24
+            RadiusBottomLeft: =0
+            RadiusBottomRight: =0
+            RadiusTopLeft: =0
+            RadiusTopRight: =0
+            Visible: =!IsBlank(varMeEmail)
+            Width: =Parent.Width
+          Children:
+            - txtLogWordmark:
+                Control: ModernText
+                Properties:
+                  AccessibleLabel: ="Timekeeper"
+                  Color: =ThInk
+                  FontWeight: =FontWeight.Semibold
+                  Height: =44
+                  LayoutMinWidth: =160
+                  Size: =24
+                  Text: ="Timekeeper"
+                  Width: =160
+                  Wrap: =false
+            - txtLogGreeting:
+                Control: ModernText
+                Properties:
+                  AccessibleLabel: ="Greeting"
+                  Color: =ThInkMuted
+                  FillPortions: =1
+                  Size: =14
+                  Text: =Greeting
+            - txtLogSignedIn:
+                Control: ModernText
+                Properties:
+                  AccessibleLabel: ="Signed in user"
+                  Color: =ThInk
+                  LayoutMinWidth: =240
+                  Size: =14
+                  Text: ="Signed in as " & Coalesce(varMe.tk_fullname, varMeEmail)
+                  Width: =240
+            - btnLogGoApprovals:
+                Control: ModernButton
+                Properties:
+                  AccessibleLabel: ="Go to Approvals"
+                  Appearance: =ButtonAppearance.Secondary
+                  BasePaletteColor: =ThPrimary
+                  Color: =ThInk
+                  Layout: =ButtonLayout.TextOnly
+                  OnSelect: =Navigate(Approvals)
+                  Size: =14
+                  Text: ="Approvals (" & CountRows(PendingApprovals) & ")"
+                  Visible: =CountRows(colDirectReports) > 0
+                  Width: =140
+            - btnLogGoAssistant:
+                Control: ModernButton
+                Properties:
+                  AccessibleLabel: ="Go to Assistant"
+                  Appearance: =ButtonAppearance.Secondary
+                  BasePaletteColor: =ThPrimary
+                  Color: =ThInk
+                  Layout: =ButtonLayout.TextOnly
+                  OnSelect: =Navigate(Assistant)
+                  Size: =14
+                  Text: ="Assistant"
+                  Visible: =!IsBlank(varMe)
+                  Width: =110
+            - btnLogSignOut:
+                Control: ModernButton
+                Properties:
+                  AccessibleLabel: ="Sign out"
+                  Appearance: =ButtonAppearance.Subtle
+                  BasePaletteColor: =ThPrimary
+                  Color: =ThPrimary
+                  Layout: =ButtonLayout.TextOnly
+                  OnSelect: |-
+                    =SignOut(); UpdateContext({locEdit: Blank(), locEntryError: ""}); Reset(inpLogEmail)
+                  Size: =14
+                  Text: ="Sign out"
+      - conLogBody:
+          Control: GroupContainer
+          Variant: AutoLayout
+          Properties:
+            DropShadow: =DropShadow.None
+            Fill: =ThBg
+            Height: =Parent.Height - 64
+            LayoutDirection: =LayoutDirection.Horizontal
+            LayoutGap: =24
+            PaddingBottom: =24
+            PaddingLeft: =24
+            PaddingRight: =24
+            PaddingTop: =24
+            Visible: =!IsBlank(varMe)
+            Width: =Parent.Width
+            Y: =64
+          Children:
+            - conLogLeft:
+                Control: GroupContainer
+                Variant: AutoLayout
+                Properties:
+                  DropShadow: =DropShadow.None
+                  LayoutAlignItems: =LayoutAlignItems.Stretch
+                  LayoutDirection: =LayoutDirection.Vertical
+                  LayoutGap: =16
+                Children:
+                  - conLogWeekCard:
+                      Control: GroupContainer
+                      Variant: AutoLayout
+                      Properties:
+                        BorderColor: =ThBorder
+                        BorderThickness: =1
+                        DropShadow: =DropShadow.None
+                        Fill: =ThSurface
+                        FillPortions: =0
+                        Height: =150
+                        LayoutAlignItems: =LayoutAlignItems.Stretch
+                        LayoutDirection: =LayoutDirection.Vertical
+                        LayoutGap: =4
+                        PaddingBottom: =16
+                        PaddingLeft: =16
+                        PaddingRight: =16
+                        PaddingTop: =16
+                        RadiusBottomLeft: =12
+                        RadiusBottomRight: =12
+                        RadiusTopLeft: =12
+                        RadiusTopRight: =12
+                      Children:
+                        - txtLogWeekTitle:
+                            Control: ModernText
+                            Properties:
+                              AccessibleLabel: ="This week"
+                              Color: =ThInkMuted
+                              Size: =12
+                              Text: ="This week · " & Text(WeekStart, "ddd d mmm") & " – " & Text(WeekStart + 6, "ddd d mmm")
+                        - txtLogWeekTotal:
+                            Control: ModernText
+                            Properties:
+                              AccessibleLabel: ="Week total hours"
+                              Color: =ThInk
+                              FontWeight: =FontWeight.Semibold
+                              Height: =56
+                              Size: =32
+                              Text: =Text(WeekTotal) & " h  of " & Text(WeekCapacity) & " h"
+                        - prgLogWeek:
+                            Control: ModernProgressBar
+                            Properties:
+                              AccessibleLabel: ="Week progress"
+                              BasePaletteColor: =ThPrimary
+                              Height: =24
+                              LayoutMinWidth: =100
+                              Max: =WeekCapacity
+                              TrackColor: =ThSurfaceAlt
+                              Value: =Min(WeekTotal, WeekCapacity)
+                  - txtLogEmpty:
+                      Control: ModernText
+                      Properties:
+                        AccessibleLabel: ="No entries message"
+                        Align: =Align.Center
+                        Color: =ThInkMuted
+                        Size: =14
+                        Text: ="No time logged yet this week. Add your first entry ✨"
+                        Visible: =CountRows(MyWeek) = 0
+                  - galLogWeek:
+                      Control: Gallery
+                      Variant: Vertical
+                      Properties:
+                        AccessibleLabel: ="This week entries"
+                        Items: =SortByColumns(MyWeek, "tk_workdate", SortOrder.Ascending)
+                        LayoutMinHeight: =120
+                        TabIndex: =0
+                        TemplatePadding: =4
+                        TemplateSize: =76
+                        Visible: =CountRows(MyWeek) > 0
+                      Children:
+                        - conLogRowCard:
+                            Control: GroupContainer
+                            Variant: ManualLayout
+                            Properties:
+                              BorderColor: =ThBorder
+                              BorderThickness: =1
+                              DropShadow: =DropShadow.None
+                              Fill: =If(locEdit.tk_timeentryid = ThisItem.tk_timeentryid, ThPrimarySoft, ThSurface)
+                              Height: =Parent.TemplateHeight - 8
+                              RadiusBottomLeft: =12
+                              RadiusBottomRight: =12
+                              RadiusTopLeft: =12
+                              RadiusTopRight: =12
+                              Width: =Parent.TemplateWidth
+                            Children:
+                              - cirLogDot:
+                                  Control: Circle
+                                  Properties:
+                                    AccessibleLabel: |-
+                                      ="Project colour: " & ThisItem.tk_Project.tk_projectname
+                                    Fill: =ThProjectDot(ThisItem.tk_Project.tk_projectname)
+                                    Height: =10
+                                    TabIndex: =0
+                                    Width: =10
+                                    X: =16
+                                    Y: =20
+                              - lblLogRow:
+                                  Control: Label
+                                  Properties:
+                                    Color: =ThInk
+                                    FocusedBorderColor: =ThFocus
+                                    FocusedBorderThickness: =2
+                                    Height: =24
+                                    PaddingLeft: =0
+                                    Size: =14
+                                    TabIndex: =0
+                                    Text: =ThisItem.tk_Project.tk_projectname & " · " & Text(ThisItem.tk_workdate, "ddd d mmm") & " (" & Text(ThisItem.tk_workdate, "yyyy-mm-dd") & ") · " & Text(ThisItem.tk_hours) & " h · " & Text(ThisItem.tk_status)
+                                    Width: =Parent.Width - 330
+                                    X: =36
+                                    Y: =12
+                              - lblLogComment:
+                                  Control: Label
+                                  Properties:
+                                    Color: =ThInkMuted
+                                    FocusedBorderColor: =ThFocus
+                                    FocusedBorderThickness: =2
+                                    Height: =22
+                                    PaddingLeft: =0
+                                    Size: =12
+                                    TabIndex: =0
+                                    Text: |-
+                                      =If(ThisItem.tk_status = 'Status (Time Entries)'.Rejected, "Manager: " & ThisItem.tk_approvercomment, ThisItem.tk_notes)
+                                    Width: =Parent.Width - 330
+                                    X: =36
+                                    Y: =36
+                              - txtLogChip:
+                                  Control: ModernText
+                                  Properties:
+                                    AccessibleLabel: ="Status"
+                                    Align: =Align.Center
+                                    Color: =ThStatusInk(Text(ThisItem.tk_status))
+                                    Fill: =ThStatusFill(Text(ThisItem.tk_status))
+                                    Height: =28
+                                    RadiusBottomLeft: =14
+                                    RadiusBottomRight: =14
+                                    RadiusTopLeft: =14
+                                    RadiusTopRight: =14
+                                    Size: =12
+                                    Text: =Text(ThisItem.tk_status)
+                                    Width: =96
+                                    X: =Parent.Width - 288
+                                    Y: =(Parent.Height - 28) / 2
+                              - btnLogEdit:
+                                  Control: ModernButton
+                                  Properties:
+                                    AccessibleLabel: ="Edit entry"
+                                    Appearance: =ButtonAppearance.Secondary
+                                    BasePaletteColor: =ThPrimary
+                                    Color: =ThInk
+                                    Layout: =ButtonLayout.TextOnly
+                                    OnSelect: |-
+                                      =UpdateContext({locEdit: ThisItem, locEntryError: ""})
+                                    Size: =12
+                                    Text: ="Edit"
+                                    Visible: =ThisItem.tk_status in ['Status (Time Entries)'.Draft, 'Status (Time Entries)'.Rejected]
+                                    Width: =80
+                                    X: =Parent.Width - 180
+                                    Y: =(Parent.Height - 32) / 2
+                              - btnLogDelete:
+                                  Control: ModernButton
+                                  Properties:
+                                    AccessibleLabel: ="Delete entry"
+                                    Appearance: =ButtonAppearance.Outline
+                                    BasePaletteColor: =ThChipRoseInk
+                                    Color: =ThChipRoseInk
+                                    Layout: =ButtonLayout.TextOnly
+                                    OnSelect: |-
+                                      =With({cur: LookUp('Time Entries', tk_timeentryid = ThisItem.tk_timeentryid)},
+                                        If(cur.tk_status <> 'Status (Time Entries)'.Draft,
+                                          Notify("This entry is no longer a draft, so it wasn't deleted.", NotificationType.Warning); Refresh('Time Entries'),
+                                          If(locEdit.tk_timeentryid = cur.tk_timeentryid, UpdateContext({locEdit: Blank()}));
+                                          Remove('Time Entries', cur);
+                                          If(!IsEmpty(Errors('Time Entries')), Notify("We couldn't delete that entry. Please try again.", NotificationType.Error))))
+                                    Size: =12
+                                    Text: ="Delete"
+                                    Visible: =ThisItem.tk_status = 'Status (Time Entries)'.Draft
+                                    Width: =80
+                                    X: =Parent.Width - 92
+                                    Y: =(Parent.Height - 32) / 2
+                  - btnSubmitWeek:
+                      Control: ModernButton
+                      Properties:
+                        AccessibleLabel: ="Submit week"
+                        BasePaletteColor: =ThPrimary
+                        Color: =ThOnPrimary
+                        DisplayMode: =If(locSubmitting || CountRows(Filter(MyWeek, tk_status = 'Status (Time Entries)'.Draft)) = 0, DisplayMode.Disabled, DisplayMode.Edit)
+                        Height: =40
+                        Layout: =ButtonLayout.TextOnly
+                        OnSelect: |-
+                          =// SubmitMyWeek flow: submits this week's drafts and posts a Teams card to the manager (FR-012)
+                          UpdateContext({locSubmitting: true});
+                          With({r: IfError(SubmitMyWeek.Run(Text(varMe.tk_employeeid)), Blank())},
+                            UpdateContext({locSubmitting: false});
+                            Refresh('Time Entries');
+                            If(IsBlank(r),
+                              Notify("We couldn't submit your week. Please try again.", NotificationType.Error),
+                              UpdateContext({locEdit: Blank(), locEntryError: ""});
+                              Notify("Submitted " & r.submitted & " entries (" & r.hours & " h)" & If(IsBlank(r.manager), If(r.submitted = "0", "", ". Your manager could not be notified in Teams"), ". " & r.manager & " was notified in Teams") & " 🎉", NotificationType.Success)))
+                        Size: =14
+                        Text: ="Submit week"
+                        Width: =160
+            - conLogForm:
+                Control: GroupContainer
+                Variant: AutoLayout
+                Properties:
+                  AlignInContainer: =AlignInContainer.Start
+                  BorderColor: =ThBorder
+                  BorderThickness: =1
+                  DropShadow: =DropShadow.None
+                  Fill: =ThSurface
+                  FillPortions: =0
+                  Height: =500
+                  LayoutAlignItems: =LayoutAlignItems.Stretch
+                  LayoutDirection: =LayoutDirection.Vertical
+                  LayoutGap: =6
+                  PaddingBottom: =16
+                  PaddingLeft: =16
+                  PaddingRight: =16
+                  PaddingTop: =16
+                  RadiusBottomLeft: =12
+                  RadiusBottomRight: =12
+                  RadiusTopLeft: =12
+                  RadiusTopRight: =12
+                  Width: =360
+                Children:
+                  - txtFormTitle:
+                      Control: ModernText
+                      Properties:
+                        AccessibleLabel: ="Entry form title"
+                        Color: =ThInk
+                        FontWeight: =FontWeight.Semibold
+                        Size: =18
+                        Text: =If(IsBlank(locEdit), "Add entry", "Change entry")
+                  - txtFormProjectLabel:
+                      Control: ModernText
+                      Properties:
+                        AccessibleLabel: ="Project label"
+                        Color: =ThInkMuted
+                        Height: =20
+                        Size: =12
+                        Text: ="Project"
+                  - drpProject:
+                      Control: ModernDropdown
+                      Properties:
+                        AccessibleLabel: ="Project"
+                        Appearance: =Appearance.Outline
+                        BasePaletteColor: =ThPrimary
+                        BorderColor: =ThBorder
+                        Color: =ThInk
+                        Default: =LookUp(colActiveProjects, Project = locEdit.tk_Project.Project)
+                        Fill: =ThSurfaceAlt
+                        ItemDisplayText: =ThisItem.'Project Name'
+                        Items: =colActiveProjects
+                        LayoutMinWidth: =200
+                  - txtFormDateLabel:
+                      Control: ModernText
+                      Properties:
+                        AccessibleLabel: ="Work date label"
+                        Color: =ThInkMuted
+                        Height: =20
+                        Size: =12
+                        Text: ="Work date"
+                  - dteWorkDate:
+                      Control: ModernDatePicker
+                      Properties:
+                        AccessibleLabel: ="Work date"
+                        Appearance: =Appearance.Outline
+                        BasePaletteColor: =ThPrimary
+                        BorderColor: =ThBorder
+                        Color: =ThInk
+                        DefaultDate: =If(IsBlank(locEdit), Today(), Date(Year(locEdit.tk_workdate), Month(locEdit.tk_workdate), Day(locEdit.tk_workdate)))
+                        EndDate: =WeekStart + 6
+                        Fill: =ThSurfaceAlt
+                        LayoutMinWidth: =200
+                        StartDate: =WeekStart
+                        StartOfWeek: =StartOfWeek.Monday
+                  - txtFormHoursLabel:
+                      Control: ModernText
+                      Properties:
+                        AccessibleLabel: ="Hours label"
+                        Color: =ThInkMuted
+                        Height: =20
+                        Size: =12
+                        Text: ="Hours (0.25 to 12)"
+                  - numHours:
+                      Control: ModernNumberInput
+                      Properties:
+                        AccessibleLabel: ="Hours"
+                        Appearance: =Appearance.Outline
+                        BasePaletteColor: =ThPrimary
+                        BorderColor: =ThBorder
+                        Color: =ThInk
+                        Default: =If(IsBlank(locEdit), 8, locEdit.tk_hours)
+                        Fill: =ThSurfaceAlt
+                        LayoutMinWidth: =200
+                        Precision: =DecimalPrecision.'2'
+                        Step: =0.25
+                  - txtFormNotesLabel:
+                      Control: ModernText
+                      Properties:
+                        AccessibleLabel: ="Notes label"
+                        Color: =ThInkMuted
+                        Height: =20
+                        Size: =12
+                        Text: ="Notes (optional)"
+                  - txtNotes:
+                      Control: ModernTextInput
+                      Properties:
+                        AccessibleLabel: ="Notes"
+                        Appearance: =Appearance.Outline
+                        BorderColor: =ThBorder
+                        Color: =ThInk
+                        Default: =locEdit.tk_notes
+                        Fill: =ThSurfaceAlt
+                        LayoutMinWidth: =200
+                  - txtEntryError:
+                      Control: ModernText
+                      Properties:
+                        AccessibleLabel: ="Entry error"
+                        Color: =ThError
+                        Height: =40
+                        Size: =12
+                        Text: =locEntryError
+                        Visible: =!IsBlank(locEntryError)
+                  - btnSaveEntry:
+                      Control: ModernButton
+                      Properties:
+                        AccessibleLabel: ="Save entry"
+                        BasePaletteColor: =ThPrimary
+                        Color: =ThOnPrimary
+                        Height: =40
+                        Layout: =ButtonLayout.TextOnly
+                        OnSelect: |-
+                          =With({p: drpProject.Selected, pid: drpProject.Selected.Project, d: dteWorkDate.SelectedDate, h: numHours.Value, editId: locEdit.tk_timeentryid},
+                            If(IsBlank(p), UpdateContext({locEntryError: "Choose an active project"}),
+                              IsBlank(d) || d < WeekStart || d >= WeekStart + 7, UpdateContext({locEntryError: "Choose a date in this week"}),
+                              IsBlank(h) || h < 0.25 || h > 12 || Mod(h * 4, 1) <> 0, UpdateContext({locEntryError: "An entry must be between 0.25 and 12 hours, in 0.25-hour steps"}),
+                              Sum(Filter(galLogWeek.AllItems, tk_workdate >= d && tk_workdate < d + 1 && (IsBlank(editId) || tk_timeentryid <> editId)), tk_hours) + h > 24, UpdateContext({locEntryError: "A day can't have more than 24 hours"}),
+                              With({proj: LookUp(Projects, Project = pid), cur: If(IsBlank(editId), Blank(), LookUp('Time Entries', tk_timeentryid = editId))},
+                                If(!IsBlank(editId) && !(cur.tk_status in ['Status (Time Entries)'.Draft, 'Status (Time Entries)'.Rejected]),
+                                  UpdateContext({locEntryError: "This entry was submitted elsewhere and can't be changed", locEdit: Blank()}),
+                                  IfError(
+                                    Patch('Time Entries', If(IsBlank(editId), Defaults('Time Entries'), cur), {
+                                      tk_title: varMe.tk_fullname & " – " & proj.'Project Name' & " – " & Text(d, "yyyy-mm-dd"),
+                                      tk_Employee: varMe, tk_Project: proj, tk_workdate: d, tk_hours: h,
+                                      tk_notes: txtNotes.Text, tk_status: 'Status (Time Entries)'.Draft});
+                                    UpdateContext({locEntryError: "", locEdit: Blank()}); Reset(numHours); Reset(txtNotes);
+                                    Notify("Saved ✓", NotificationType.Success),
+                                    UpdateContext({locEntryError: "We couldn't save that entry. Please try again."}))))))
+                        Size: =14
+                        Text: =If(IsBlank(locEdit), "Save entry", "Save changes")
+                  - btnCancelEdit:
+                      Control: ModernButton
+                      Properties:
+                        AccessibleLabel: ="Cancel edit"
+                        Appearance: =ButtonAppearance.Secondary
+                        BasePaletteColor: =ThPrimary
+                        Color: =ThInk
+                        Height: =40
+                        Layout: =ButtonLayout.TextOnly
+                        OnSelect: |-
+                          =UpdateContext({locEdit: Blank(), locEntryError: ""}); Reset(numHours); Reset(txtNotes)
+                        Size: =14
+                        Text: ="Cancel"
+                        Visible: =!IsBlank(locEdit)
+      - conLogNotRegistered:
+          Control: GroupContainer
+          Variant: ManualLayout
+          Properties:
+            BorderColor: =ThBorder
+            BorderThickness: =1
+            DropShadow: =DropShadow.None
+            Fill: =ThSurface
+            Height: =120
+            RadiusBottomLeft: =16
+            RadiusBottomRight: =16
+            RadiusTopLeft: =16
+            RadiusTopRight: =16
+            Visible: =!IsBlank(varMeEmail) && IsBlank(varMe)
+            Width: =480
+            X: =(Parent.Width - 480) / 2
+            Y: =(Parent.Height - 120) / 2
+          Children:
+            - txtNotRegistered:
+                Control: ModernText
+                Properties:
+                  AccessibleLabel: ="Not registered message"
+                  Align: =Align.Center
+                  Color: =ThInk
+                  Height: =72
+                  Size: =14
+                  Text: ="You're not registered in Timekeeper. Contact your manager."
+                  Width: =Parent.Width - 48
+                  X: =24
+                  Y: =24
+      - conSignInCard:
+          Control: GroupContainer
+          Variant: ManualLayout
+          Properties:
+            BorderColor: =ThBorder
+            BorderThickness: =1
+            DropShadow: =DropShadow.None
+            Fill: =ThSurface
+            Height: =300
+            RadiusBottomLeft: =16
+            RadiusBottomRight: =16
+            RadiusTopLeft: =16
+            RadiusTopRight: =16
+            Visible: =IsBlank(varMeEmail)
+            Width: =420
+            X: =(Parent.Width - 420) / 2
+            Y: =(Parent.Height - 300) / 2
+          Children:
+            - txtSignInWordmark:
+                Control: ModernText
+                Properties:
+                  AccessibleLabel: ="Timekeeper"
+                  Color: =ThInk
+                  FontWeight: =FontWeight.Semibold
+                  Size: =24
+                  Text: ="Timekeeper"
+                  Width: =Parent.Width - 48
+                  X: =24
+                  Y: =24
+            - txtSignInSubtitle:
+                Control: ModernText
+                Properties:
+                  AccessibleLabel: ="Enter your work email to see your time"
+                  Color: =ThInkMuted
+                  Height: =24
+                  Size: =14
+                  Text: ="Enter your work email to see your time"
+                  Width: =Parent.Width - 48
+                  X: =24
+                  Y: =64
+            - inpLogEmail:
+                Control: ModernTextInput
+                Properties:
+                  AccessibleLabel: ="Email"
+                  Appearance: =Appearance.Outline
+                  BorderColor: =ThBorder
+                  Color: =ThInk
+                  Fill: =ThSurfaceAlt
+                  Height: =40
+                  Placeholder: ="you@example.com"
+                  Width: =Parent.Width - 48
+                  X: =24
+                  Y: =104
+            - txtSignInError:
+                Control: ModernText
+                Properties:
+                  AccessibleLabel: ="Sign-in error"
+                  Color: =ThError
+                  Height: =24
+                  Size: =12
+                  Text: =locSignInError
+                  Width: =Parent.Width - 48
+                  X: =24
+                  Y: =150
+            - btnContinue:
+                Control: ModernButton
+                Properties:
+                  AccessibleLabel: ="Continue"
+                  BasePaletteColor: =ThPrimary
+                  Color: =ThOnPrimary
+                  Height: =40
+                  Layout: =ButtonLayout.TextOnly
+                  OnSelect: |-
+                    =If(IsMatch(Trim(inpLogEmail.Text), Match.Email),
+                      UpdateContext({locSignInError: "", locEdit: Blank(), locEntryError: ""});
+                      SignIn(inpLogEmail.Text),
+                      UpdateContext({locSignInError: "Enter a valid email address"}))
+                  RadiusBottomLeft: =8
+                  RadiusBottomRight: =8
+                  RadiusTopLeft: =8
+                  RadiusTopRight: =8
+                  Size: =14
+                  Text: ="Continue"
+                  Width: =Parent.Width - 48
+                  X: =24
+                  Y: =186
+            - txtSignInNotice:
+                Control: ModernText
+                Properties:
+                  AccessibleLabel: ="Demo notice"
+                  Color: =ThInkMuted
+                  Height: =40
+                  Size: =12
+                  Text: |-
+                    ="Demo only: no password. Anyone can open the time of the email they enter."
+                  VerticalAlign: =VerticalAlign.Top
+                  Width: =Parent.Width - 48
+                  X: =24
+                  Y: =240
+      - tmrLogRefresh:
+          Control: Timer
+          Properties:
+            AutoPause: =true
+            AutoStart: =true
+            Duration: =30000
+            OnTimerEnd: =If(!IsBlank(varMe), Refresh('Time Entries'))
+            Repeat: =true
+            TabIndex: =0
+            Visible: =false

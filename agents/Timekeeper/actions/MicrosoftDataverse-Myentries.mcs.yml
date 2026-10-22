@@ -1,0 +1,91 @@
+mcs.metadata:
+  componentName: My entries
+kind: TaskDialog
+inputs:
+  - kind: ManualTaskInput
+    propertyName: organization
+    value: =Env.tk_DataverseUrl
+
+  - kind: ManualTaskInput
+    propertyName: entityName
+    value: tk_timeentries
+
+  - kind: ManualTaskInput
+    propertyName: "'$filter'"
+    value: ="_tk_employee_value eq " & Global.EmployeeId
+
+  - kind: ManualTaskInput
+    propertyName: "'$select'"
+    value: tk_timeentryid,tk_title,tk_workdate,tk_hours,tk_status,tk_notes,tk_approvercomment,_tk_project_value
+
+  - kind: ManualTaskInput
+    propertyName: "'$orderby'"
+    value: tk_workdate desc
+
+  - kind: ManualTaskInput
+    propertyName: "'$top'"
+    value: 200
+
+modelDisplayName: My entries
+modelDescription: Returns all of the signed-in user's own time entries (id, title, work date, hours, status number, notes, manager comment, project id). Call before summarising, before submitting, and before adding (to check the 24-hour day limit).
+outputs:
+  - propertyName: value
+    name: value
+
+action:
+  kind: InvokeConnectorTaskAction
+  connectionReference: tk_dataverse
+  connectionProperties:
+    mode: Maker
+
+  operationId: ListRecordsWithOrganization
+  dynamicOutputSchema:
+    kind: Record
+    properties:
+      value:
+        order: 0
+        type:
+          kind: Table
+          properties:
+            tk_timeentryid:
+              displayName: tk_timeentryid
+              order: 0
+              type: String
+
+            tk_title:
+              displayName: tk_title
+              order: 1
+              type: String
+
+            tk_workdate:
+              displayName: tk_workdate
+              order: 2
+              type: DateTime
+
+            tk_hours:
+              displayName: tk_hours
+              order: 3
+              type: Number
+
+            tk_status:
+              displayName: tk_status
+              order: 4
+              type: Number
+
+            tk_notes:
+              displayName: tk_notes
+              order: 5
+              type: String
+
+            tk_approvercomment:
+              displayName: tk_approvercomment
+              order: 6
+              type: String
+
+            _tk_project_value:
+              displayName: _tk_project_value
+              order: 7
+              type: String
+
+
+outputMode: All

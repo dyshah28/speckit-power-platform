@@ -1,0 +1,9 @@
+{
+  "_comment": "Single source of truth for Dataverse names used by tests. Confirm against the live schema (task T009).",
+  "entities": {
+    "tk_employees": ["tk_fullname", "tk_email", "_tk_manager_value", "tk_weeklycapacityhours"],
+    "tk_projects": ["tk_projectname", "tk_projectcode", "tk_budgethours"],
+    "tk_timeentries": ["_tk_employee_value", "_tk_project_value", "tk_workdate", "tk_hours", "tk_status", "tk_approvercomment"],
+    "tk_vacationbalances": ["_tk_employee_value", "tk_year", "tk_remaininghours"]
+  }
+}

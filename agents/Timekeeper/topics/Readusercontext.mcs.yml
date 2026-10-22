@@ -1,0 +1,40 @@
+mcs.metadata:
+  componentName: Read user context
+kind: AdaptiveDialog
+beginDialog:
+  kind: OnActivity
+  id: main
+  type: Message
+  actions:
+    - kind: ConditionGroup
+      id: conditionGroup_tkCtx1
+      conditions:
+        - id: conditionItem_tkCtx1
+          condition: "=StartsWith(System.Activity.Text, \"[User: \") && !IsBlank(Find(\"; Employee: \", System.Activity.Text)) && Find(\";\", System.Activity.Text) > 8"
+          actions:
+            - kind: SetVariable
+              id: setVariable_tkEmail
+              variable: Global.UserEmail
+              value: =Lower(Trim(Mid(System.Activity.Text, 8, Find(";", System.Activity.Text) - 8)))
+
+            - kind: SetVariable
+              id: setVariable_tkEmp
+              variable: Global.EmployeeId
+              value: =Mid(System.Activity.Text, Find("; Employee: ", System.Activity.Text) + 12, 36)
+
+      elseActions:
+        - kind: ConditionGroup
+          id: conditionGroup_tkNoCtx
+          conditions:
+            - id: conditionItem_tkNoCtx
+              condition: =IsBlank(Global.UserEmail)
+              actions:
+                - kind: SendActivity
+                  id: sendMessage_tkNoCtx
+                  activity: Please open me from the Timekeeper app.
+
+                - kind: CancelAllDialogs
+                  id: cancelAll_tkNoCtx
+
+inputType: {}
+outputType: {}

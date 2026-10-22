@@ -1,0 +1,17 @@
+{
+  "name": "timekeeper-harness-layer2",
+  "private": true,
+  "description": "Layer 2 of the Timekeeper harness: Playwright UI tests for the canvas app + Dataverse Web API contract checks",
+  "scripts": {
+    "test": "playwright test",
+    "test:ui-only": "playwright test --project=employee --project=manager",
+    "test:api": "playwright test --project=api",
+    "test:headed": "playwright test --headed",
+    "auth": "node scripts/record-auth.mjs",
+    "report": "playwright show-report ../reports/layer2-html"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.63.0",
+    "dotenv": "17.4.2"
+  }
+}

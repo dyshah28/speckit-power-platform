@@ -1,0 +1,40 @@
+mcs.metadata:
+  componentName: Submit my week
+kind: AdaptiveDialog
+modelDescription: Submits ALL of the signed-in user's Draft time entries of the current week for approval, and notifies their manager in Teams. It takes no input. Only call it after you listed those Draft entries from My entries and the user said yes in a later message.
+beginDialog:
+  kind: OnRecognizedIntent
+  id: main
+  intent: {}
+  actions:
+    - kind: InvokeFlowAction
+      id: invokeFlowAction_tkSubmit
+      input:
+        binding:
+          text: =Global.EmployeeId
+
+      output:
+        binding:
+          hours: Topic.hours
+          manager: Topic.manager
+          submitted: Topic.submitted
+
+      flowId: __SUBMIT_FLOW_ID__
+
+inputType: {}
+outputType:
+  properties:
+    hours:
+      displayName: hours
+      description: Total hours submitted
+      type: String
+
+    manager:
+      displayName: manager
+      description: Name of the manager who was notified in Teams, or empty if nobody was notified
+      type: String
+
+    submitted:
+      displayName: submitted
+      description: Number of entries submitted
+      type: String

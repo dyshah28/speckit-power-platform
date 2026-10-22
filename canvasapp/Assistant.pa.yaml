@@ -1,0 +1,394 @@
+Screens:
+  Assistant:
+    Properties:
+      Fill: =ThBg
+      LoadingSpinnerColor: =ThPrimary
+      OnVisible: |-
+        =UpdateContext({locThinking: false, locError: "", locLastText: "", locMsgError: "", locDraft: "", locRetry: false})
+    Children:
+      - conAsstAppBar:
+          Control: GroupContainer
+          Variant: AutoLayout
+          Properties:
+            DropShadow: =DropShadow.None
+            Fill: =ThAppBar
+            Height: =64
+            LayoutAlignItems: =LayoutAlignItems.Center
+            LayoutDirection: =LayoutDirection.Horizontal
+            LayoutGap: =16
+            PaddingLeft: =24
+            PaddingRight: =24
+            RadiusBottomLeft: =0
+            RadiusBottomRight: =0
+            RadiusTopLeft: =0
+            RadiusTopRight: =0
+            Width: =Parent.Width
+          Children:
+            - txtAsstWordmark:
+                Control: ModernText
+                Properties:
+                  AccessibleLabel: ="Timekeeper"
+                  Color: =ThInk
+                  FontWeight: =FontWeight.Semibold
+                  Height: =44
+                  LayoutMinWidth: =160
+                  Size: =24
+                  Text: ="Timekeeper"
+                  Width: =160
+                  Wrap: =false
+            - txtAsstGreeting:
+                Control: ModernText
+                Properties:
+                  AccessibleLabel: ="Greeting"
+                  Color: =ThInkMuted
+                  FillPortions: =1
+                  Size: =14
+                  Text: =Greeting
+            - txtAsstSignedIn:
+                Control: ModernText
+                Properties:
+                  AccessibleLabel: ="Signed in user"
+                  Color: =ThInk
+                  LayoutMinWidth: =240
+                  Size: =14
+                  Text: ="Signed in as " & Coalesce(varMe.tk_fullname, varMeEmail)
+                  Width: =240
+            - btnAsstGoLogTime:
+                Control: ModernButton
+                Properties:
+                  AccessibleLabel: ="Go to Log Time"
+                  Appearance: =ButtonAppearance.Secondary
+                  BasePaletteColor: =ThPrimary
+                  Color: =ThInk
+                  Layout: =ButtonLayout.TextOnly
+                  OnSelect: =Navigate(Screen1)
+                  Size: =14
+                  Text: ="Log Time"
+                  Width: =110
+            - btnAsstGoApprovals:
+                Control: ModernButton
+                Properties:
+                  AccessibleLabel: ="Go to Approvals"
+                  Appearance: =ButtonAppearance.Secondary
+                  BasePaletteColor: =ThPrimary
+                  Color: =ThInk
+                  Layout: =ButtonLayout.TextOnly
+                  OnSelect: =Navigate(Approvals)
+                  Size: =14
+                  Text: ="Approvals"
+                  Visible: =CountRows(colDirectReports) > 0
+                  Width: =110
+            - btnAsstSignOut:
+                Control: ModernButton
+                Properties:
+                  AccessibleLabel: ="Sign out"
+                  Appearance: =ButtonAppearance.Subtle
+                  BasePaletteColor: =ThPrimary
+                  Color: =ThPrimary
+                  Layout: =ButtonLayout.TextOnly
+                  OnSelect: =SignOut(); Navigate(Screen1)
+                  Size: =14
+                  Text: ="Sign out"
+      - txtAsstNotice:
+          Control: ModernText
+          Properties:
+            AccessibleLabel: ="Assistant notice"
+            Color: =ThInkMuted
+            Height: =48
+            Size: =12
+            Text: |-
+              ="I can add time for you, submit your entries and summarise your history, always after you confirm. I never approve, reject, change or delete entries (use Log Time or Approvals). Demo only: no password."
+            Width: =If(Parent.Width < 948, Parent.Width - 48, 900)
+            X: =If(Parent.Width < 948, 24, (Parent.Width - 900) / 2)
+            Y: =72
+      - btnAsstChipWeek:
+          Control: ModernButton
+          Properties:
+            AccessibleLabel: |-
+              ="Suggested question: What have I logged this week?"
+            Appearance: =ButtonAppearance.Outline
+            BasePaletteColor: =ThPrimary
+            Color: =ThPrimary
+            DisplayMode: =If(locThinking, DisplayMode.Disabled, DisplayMode.Edit)
+            Height: =40
+            Layout: =ButtonLayout.TextOnly
+            OnSelect: |-
+              =UpdateContext({locDraft: "What have I logged this week?"});Reset(inpAsstMessage);Select(btnAsstSend)
+            RadiusBottomLeft: =8
+            RadiusBottomRight: =8
+            RadiusTopLeft: =8
+            RadiusTopRight: =8
+            Size: =12
+            Text: ="What have I logged this week?"
+            Visible: =CountRows(colChat) = 0
+            Width: =(If(Parent.Width < 948, Parent.Width - 48, 900) - 24) / 4
+            X: =If(Parent.Width < 948, 24, (Parent.Width - 900) / 2) + 0 * ((If(Parent.Width < 948, Parent.Width - 48, 900) - 24) / 4 + 8)
+            Y: =124
+      - btnAsstChipLog:
+          Control: ModernButton
+          Properties:
+            AccessibleLabel: |-
+              ="Suggested question: Log 8 hours to Contoso Migration today"
+            Appearance: =ButtonAppearance.Outline
+            BasePaletteColor: =ThPrimary
+            Color: =ThPrimary
+            DisplayMode: =If(locThinking, DisplayMode.Disabled, DisplayMode.Edit)
+            Height: =40
+            Layout: =ButtonLayout.TextOnly
+            OnSelect: |-
+              =UpdateContext({locDraft: "Log 8 hours to Contoso Migration today"});Reset(inpAsstMessage);Select(btnAsstSend)
+            RadiusBottomLeft: =8
+            RadiusBottomRight: =8
+            RadiusTopLeft: =8
+            RadiusTopRight: =8
+            Size: =12
+            Text: ="Log 8 hours to Contoso Migration today"
+            Visible: =CountRows(colChat) = 0
+            Width: =(If(Parent.Width < 948, Parent.Width - 48, 900) - 24) / 4
+            X: =If(Parent.Width < 948, 24, (Parent.Width - 900) / 2) + 1 * ((If(Parent.Width < 948, Parent.Width - 48, 900) - 24) / 4 + 8)
+            Y: =124
+      - btnAsstChipSubmit:
+          Control: ModernButton
+          Properties:
+            AccessibleLabel: |-
+              ="Suggested question: Submit my week"
+            Appearance: =ButtonAppearance.Outline
+            BasePaletteColor: =ThPrimary
+            Color: =ThPrimary
+            DisplayMode: =If(locThinking, DisplayMode.Disabled, DisplayMode.Edit)
+            Height: =40
+            Layout: =ButtonLayout.TextOnly
+            OnSelect: |-
+              =UpdateContext({locDraft: "Submit my week"});Reset(inpAsstMessage);Select(btnAsstSend)
+            RadiusBottomLeft: =8
+            RadiusBottomRight: =8
+            RadiusTopLeft: =8
+            RadiusTopRight: =8
+            Size: =12
+            Text: ="Submit my week"
+            Visible: =CountRows(colChat) = 0
+            Width: =(If(Parent.Width < 948, Parent.Width - 48, 900) - 24) / 4
+            X: =If(Parent.Width < 948, 24, (Parent.Width - 900) / 2) + 2 * ((If(Parent.Width < 948, Parent.Width - 48, 900) - 24) / 4 + 8)
+            Y: =124
+      - btnAsstChipHistory:
+          Control: ModernButton
+          Properties:
+            AccessibleLabel: |-
+              ="Suggested question: Summarise my last 4 weeks"
+            Appearance: =ButtonAppearance.Outline
+            BasePaletteColor: =ThPrimary
+            Color: =ThPrimary
+            DisplayMode: =If(locThinking, DisplayMode.Disabled, DisplayMode.Edit)
+            Height: =40
+            Layout: =ButtonLayout.TextOnly
+            OnSelect: |-
+              =UpdateContext({locDraft: "Summarise my last 4 weeks"});Reset(inpAsstMessage);Select(btnAsstSend)
+            RadiusBottomLeft: =8
+            RadiusBottomRight: =8
+            RadiusTopLeft: =8
+            RadiusTopRight: =8
+            Size: =12
+            Text: ="Summarise my last 4 weeks"
+            Visible: =CountRows(colChat) = 0
+            Width: =(If(Parent.Width < 948, Parent.Width - 48, 900) - 24) / 4
+            X: =If(Parent.Width < 948, 24, (Parent.Width - 900) / 2) + 3 * ((If(Parent.Width < 948, Parent.Width - 48, 900) - 24) / 4 + 8)
+            Y: =124
+      - galAsstChat:
+          Control: Gallery
+          Variant: Vertical
+          Properties:
+            AccessibleLabel: ="Chat messages"
+            Height: =Parent.Height - If(CountRows(colChat) = 0, 332, 288)
+            Items: =colChat
+            TabIndex: =0
+            TemplatePadding: =8
+            TemplateSize: =96
+            Width: =If(Parent.Width < 948, Parent.Width - 48, 900)
+            X: =If(Parent.Width < 948, 24, (Parent.Width - 900) / 2)
+            Y: =If(CountRows(colChat) = 0, 172, 128)
+          Children:
+            - conAsstBubble:
+                Control: GroupContainer
+                Variant: ManualLayout
+                Properties:
+                  BorderColor: =ThBorder
+                  BorderThickness: =1
+                  Fill: =If(ThisItem.Role = "user", ThPrimarySoft, ThSurface)
+                  Height: =Parent.TemplateHeight - 8
+                  RadiusBottomLeft: =12
+                  RadiusBottomRight: =12
+                  RadiusTopLeft: =12
+                  RadiusTopRight: =12
+                  Width: =Parent.TemplateWidth * 0.8
+                  X: =If(ThisItem.Role = "user", Parent.TemplateWidth * 0.2, 0)
+                Children:
+                  - txtAsstBubble:
+                      Control: ModernText
+                      Properties:
+                        AccessibleLabel: =If(ThisItem.Role = "user", "Your message", "Assistant message")
+                        Color: =ThInk
+                        Height: =Parent.Height - 16
+                        PaddingBottom: =0
+                        PaddingLeft: =0
+                        PaddingRight: =0
+                        PaddingTop: =0
+                        Size: =14
+                        Text: |-
+                          =If(ThisItem.Role = "user", "You: ", "Assistant: ") & ThisItem.Text
+                        VerticalAlign: =VerticalAlign.Top
+                        Width: =Parent.Width - 24
+                        X: =12
+                        Y: =8
+      - conAsstError:
+          Control: GroupContainer
+          Variant: ManualLayout
+          Properties:
+            BorderColor: =ThBorder
+            BorderThickness: =1
+            Fill: =ThSurface
+            Height: =56
+            RadiusBottomLeft: =12
+            RadiusBottomRight: =12
+            RadiusTopLeft: =12
+            RadiusTopRight: =12
+            Visible: =!IsBlank(locError)
+            Width: =If(Parent.Width < 948, Parent.Width - 48, 900)
+            X: =If(Parent.Width < 948, 24, (Parent.Width - 900) / 2)
+            Y: =Parent.Height - 156
+          Children:
+            - lblAsstError:
+                Control: Label
+                Properties:
+                  Color: =ThInk
+                  FocusedBorderColor: =ThPrimary
+                  FocusedBorderThickness: =2
+                  Live: =Live.Polite
+                  Size: =14
+                  TabIndex: =0
+                  Text: ="I couldn't answer that just now. Please try again."
+                  Width: =Parent.Width - 160
+                  X: =12
+                  Y: =8
+            - btnAsstTryAgain:
+                Control: ModernButton
+                Properties:
+                  AccessibleLabel: ="Try again"
+                  Appearance: =ButtonAppearance.Outline
+                  BasePaletteColor: =ThPrimary
+                  Color: =ThPrimary
+                  DisplayMode: =If(locThinking, DisplayMode.Disabled, DisplayMode.Edit)
+                  Height: =40
+                  Layout: =ButtonLayout.TextOnly
+                  OnSelect: |-
+                    =UpdateContext({locDraft: locLastText, locRetry: true});Reset(inpAsstMessage);Select(btnAsstSend)
+                  RadiusBottomLeft: =8
+                  RadiusBottomRight: =8
+                  RadiusTopLeft: =8
+                  RadiusTopRight: =8
+                  Size: =14
+                  Text: ="Try again"
+                  Width: =128
+                  X: =Parent.Width - 140
+                  Y: =8
+      - lblAsstThinking:
+          Control: Label
+          Properties:
+            Color: =ThInkMuted
+            FocusedBorderColor: =ThPrimary
+            FocusedBorderThickness: =2
+            Height: =24
+            Live: =Live.Polite
+            Size: =12
+            TabIndex: =0
+            Text: ="Assistant is thinking…"
+            Visible: =locThinking
+            Width: =If(Parent.Width < 948, Parent.Width - 48, 900)
+            X: =If(Parent.Width < 948, 24, (Parent.Width - 900) / 2)
+            Y: =Parent.Height - 96
+      - txtAsstMessageError:
+          Control: ModernText
+          Properties:
+            AccessibleLabel: ="Message error"
+            Color: =ThInk
+            Height: =24
+            Size: =12
+            Text: =locMsgError
+            Visible: =!IsBlank(locMsgError)
+            Width: =If(Parent.Width < 948, Parent.Width - 48, 900)
+            X: =If(Parent.Width < 948, 24, (Parent.Width - 900) / 2)
+            Y: =Parent.Height - 96
+      - inpAsstMessage:
+          Control: ModernTextInput
+          Properties:
+            AccessibleLabel: ="Message"
+            Appearance: =Appearance.Outline
+            BorderColor: =ThBorder
+            Color: =ThInk
+            Default: =locDraft
+            DisplayMode: =If(locThinking, DisplayMode.Disabled, DisplayMode.Edit)
+            Fill: =ThSurfaceAlt
+            Height: =40
+            Placeholder: ="Ask about your time, or tell me what to log or submit..."
+            Width: =If(Parent.Width < 948, Parent.Width - 48, 900) - 224
+            X: =If(Parent.Width < 948, 24, (Parent.Width - 900) / 2)
+            Y: =Parent.Height - 64
+      - btnAsstSend:
+          Control: ModernButton
+          Properties:
+            AccessibleLabel: ="Send"
+            BasePaletteColor: =ThPrimary
+            Color: =ThOnPrimary
+            DisplayMode: =If(locThinking, DisplayMode.Disabled, DisplayMode.Edit)
+            Height: =40
+            Layout: =ButtonLayout.TextOnly
+            OnSelect: |-
+              =UpdateContext({locMsgError: ""});
+              If(IsBlank(Trim(inpAsstMessage.Text)),
+                UpdateContext({locMsgError: "Type a question first"}),
+                Len(inpAsstMessage.Text) > 500,
+                UpdateContext({locMsgError: "Keep it under 500 characters"}),
+                With({txt: Trim(inpAsstMessage.Text), ep: varChatEpoch, retry: locRetry},
+                  UpdateContext({locThinking: true, locError: "", locLastText: txt, locRetry: false});
+                  If(!retry, Collect(colChat, {Id: CountRows(colChat) + 1, Role: "user", Text: txt}));
+                  UpdateContext({locDraft: ""});
+                  Reset(inpAsstMessage);
+                  With({r: IfError(AskTimekeeper.Run("[User: " & varMeEmail & "; Employee: " & Text(varMe.tk_employeeid) & "; Today: " & Text(Today(), "yyyy-mm-dd (dddd)") & "] " & Substitute(Substitute(txt, "[", "("), "]", ")"), If(IsBlank(varConversationId), {}, {text_1: varConversationId})), Blank())},
+                    If(ep <> varChatEpoch,
+                      Blank(),
+                      IsBlank(r) || IsBlank(r.reply),
+                      UpdateContext({locError: "error", locThinking: false}),
+                      Collect(colChat, {Id: CountRows(colChat) + 1, Role: "assistant", Text: r.reply});
+                      Set(varConversationId, r.conversationid);
+                      UpdateContext({locThinking: false})
+                    )
+                  )
+                )
+              )
+            RadiusBottomLeft: =8
+            RadiusBottomRight: =8
+            RadiusTopLeft: =8
+            RadiusTopRight: =8
+            Size: =14
+            Text: ="Send"
+            X: =If(Parent.Width < 948, 24, (Parent.Width - 900) / 2) + If(Parent.Width < 948, Parent.Width - 48, 900) - 216
+            Y: =Parent.Height - 64
+      - btnAsstNewChat:
+          Control: ModernButton
+          Properties:
+            AccessibleLabel: ="New chat"
+            Appearance: =ButtonAppearance.Outline
+            BasePaletteColor: =ThPrimary
+            Color: =ThPrimary
+            Height: =40
+            Layout: =ButtonLayout.TextOnly
+            OnSelect: |-
+              =Clear(colChat);Set(varConversationId, "");Set(varChatEpoch, varChatEpoch + 1);UpdateContext({locThinking: false, locError: "", locMsgError: "", locLastText: "", locDraft: ""});Reset(inpAsstMessage)
+            RadiusBottomLeft: =8
+            RadiusBottomRight: =8
+            RadiusTopLeft: =8
+            RadiusTopRight: =8
+            Size: =14
+            Text: ="New chat"
+            Width: =112
+            X: =If(Parent.Width < 948, 24, (Parent.Width - 900) / 2) + If(Parent.Width < 948, Parent.Width - 48, 900) - 112
+            Y: =Parent.Height - 64

@@ -1,0 +1,5 @@
+﻿connectionReferences:
+  - connectionReferenceLogicalName: tk_dataverse
+    connectorId: /providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps
+  - connectionReferenceLogicalName: tk_teams
+    connectorId: /providers/Microsoft.PowerApps/apis/shared_teams

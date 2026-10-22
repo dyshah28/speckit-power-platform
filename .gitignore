@@ -1,0 +1,13 @@
+# secrets and local auth
+harness/layer2-playwright/.env
+harness/layer2-playwright/auth/
+scripts/.private-patterns
+# Copilot Studio clone state (environment and agent ids)
+agents/*/.mcs/
+agents/*/workflows/
+# generated
+harness/layer2-playwright/node_modules/
+harness/layer2-playwright/test-results/
+harness/reports/*
+!harness/reports/.gitkeep
+harness-report.md

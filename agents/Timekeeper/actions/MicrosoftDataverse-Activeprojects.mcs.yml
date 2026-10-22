@@ -1,0 +1,66 @@
+mcs.metadata:
+  componentName: Active projects
+kind: TaskDialog
+inputs:
+  - kind: ManualTaskInput
+    propertyName: organization
+    value: =Env.tk_DataverseUrl
+
+  - kind: ManualTaskInput
+    propertyName: entityName
+    value: tk_projects
+
+  - kind: ManualTaskInput
+    propertyName: "'$filter'"
+    value: tk_active eq true
+
+  - kind: ManualTaskInput
+    propertyName: "'$select'"
+    value: tk_projectid,tk_projectname,tk_projectcode
+
+  - kind: ManualTaskInput
+    propertyName: "'$orderby'"
+    value: tk_projectname asc
+
+  - kind: ManualTaskInput
+    propertyName: "'$top'"
+    value: 200
+
+modelDisplayName: Active projects
+modelDescription: Returns the active projects (id, name, code). Call before adding a time entry, to match the project the user named.
+outputs:
+  - propertyName: value
+    name: value
+
+action:
+  kind: InvokeConnectorTaskAction
+  connectionReference: tk_dataverse
+  connectionProperties:
+    mode: Maker
+
+  operationId: ListRecordsWithOrganization
+  dynamicOutputSchema:
+    kind: Record
+    properties:
+      value:
+        order: 0
+        type:
+          kind: Table
+          properties:
+            tk_projectid:
+              displayName: tk_projectid
+              order: 0
+              type: String
+
+            tk_projectname:
+              displayName: tk_projectname
+              order: 1
+              type: String
+
+            tk_projectcode:
+              displayName: tk_projectcode
+              order: 2
+              type: String
+
+
+outputMode: All

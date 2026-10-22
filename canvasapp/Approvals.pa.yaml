@@ -1,0 +1,347 @@
+Screens:
+  Approvals:
+    Properties:
+      Fill: =ThBg
+      LoadingSpinnerColor: =ThPrimary
+      OnVisible: |-
+        =UpdateContext({locReject: Blank(), locRejectError: ""}); Refresh('Time Entries')
+    Children:
+      - conApprAppBar:
+          Control: GroupContainer
+          Variant: AutoLayout
+          Properties:
+            DropShadow: =DropShadow.None
+            Fill: =ThAppBar
+            Height: =64
+            LayoutAlignItems: =LayoutAlignItems.Center
+            LayoutDirection: =LayoutDirection.Horizontal
+            LayoutGap: =16
+            PaddingLeft: =24
+            PaddingRight: =24
+            RadiusBottomLeft: =0
+            RadiusBottomRight: =0
+            RadiusTopLeft: =0
+            RadiusTopRight: =0
+            Width: =Parent.Width
+          Children:
+            - txtApprWordmark:
+                Control: ModernText
+                Properties:
+                  AccessibleLabel: ="Timekeeper"
+                  Color: =ThInk
+                  FontWeight: =FontWeight.Semibold
+                  Height: =44
+                  LayoutMinWidth: =160
+                  Size: =24
+                  Text: ="Timekeeper"
+                  Width: =160
+                  Wrap: =false
+            - txtApprGreeting:
+                Control: ModernText
+                Properties:
+                  AccessibleLabel: ="Greeting"
+                  Color: =ThInkMuted
+                  FillPortions: =1
+                  Size: =14
+                  Text: =Greeting
+            - txtApprSignedIn:
+                Control: ModernText
+                Properties:
+                  AccessibleLabel: ="Signed in user"
+                  Color: =ThInk
+                  LayoutMinWidth: =240
+                  Size: =14
+                  Text: ="Signed in as " & Coalesce(varMe.tk_fullname, varMeEmail)
+                  Width: =240
+            - btnApprGoLogTime:
+                Control: ModernButton
+                Properties:
+                  AccessibleLabel: ="Go to Log Time"
+                  Appearance: =ButtonAppearance.Secondary
+                  BasePaletteColor: =ThPrimary
+                  Color: =ThInk
+                  Layout: =ButtonLayout.TextOnly
+                  OnSelect: =Navigate(Screen1)
+                  Size: =14
+                  Text: ="Log Time"
+                  Width: =110
+            - btnApprGoAssistant:
+                Control: ModernButton
+                Properties:
+                  AccessibleLabel: ="Go to Assistant"
+                  Appearance: =ButtonAppearance.Secondary
+                  BasePaletteColor: =ThPrimary
+                  Color: =ThInk
+                  Layout: =ButtonLayout.TextOnly
+                  OnSelect: =Navigate(Assistant)
+                  Size: =14
+                  Text: ="Assistant"
+                  Width: =110
+            - btnApprSignOut:
+                Control: ModernButton
+                Properties:
+                  AccessibleLabel: ="Sign out"
+                  Appearance: =ButtonAppearance.Subtle
+                  BasePaletteColor: =ThPrimary
+                  Color: =ThPrimary
+                  Layout: =ButtonLayout.TextOnly
+                  OnSelect: =SignOut(); Navigate(Screen1)
+                  Size: =14
+                  Text: ="Sign out"
+      - txtApprTitle:
+          Control: ModernText
+          Properties:
+            AccessibleLabel: ="Waiting for your approval"
+            Color: =ThInk
+            FontWeight: =FontWeight.Semibold
+            Height: =40
+            Size: =18
+            Text: ="Waiting for your approval (" & CountRows(PendingApprovals) & ")"
+            Width: =If(Parent.Width < 948, Parent.Width - 48, 900)
+            X: =If(Parent.Width < 948, 24, (Parent.Width - 900) / 2)
+            Y: =80
+      - txtApprEmpty:
+          Control: ModernText
+          Properties:
+            AccessibleLabel: ="No pending approvals message"
+            Align: =Align.Center
+            Color: =ThInkMuted
+            Height: =48
+            Size: =14
+            Text: |-
+              =If(CountRows(colDirectReports) = 0, "You don't have anyone to approve.", "All caught up — nothing waiting for approval 🎉")
+            Visible: =CountRows(PendingApprovals) = 0
+            Width: =If(Parent.Width < 948, Parent.Width - 48, 900)
+            X: =If(Parent.Width < 948, 24, (Parent.Width - 900) / 2)
+            Y: =136
+      - galPending:
+          Control: Gallery
+          Variant: Vertical
+          Properties:
+            AccessibleLabel: ="Pending approvals"
+            Height: =Parent.Height - 136 - If(IsBlank(locReject), 24, 220)
+            Items: =SortByColumns(PendingApprovals, "tk_workdate", SortOrder.Ascending)
+            TabIndex: =0
+            TemplatePadding: =4
+            TemplateSize: =80
+            Visible: =CountRows(PendingApprovals) > 0
+            Width: =If(Parent.Width < 948, Parent.Width - 48, 900)
+            X: =If(Parent.Width < 948, 24, (Parent.Width - 900) / 2)
+            Y: =128
+          Children:
+            - conApprRowCard:
+                Control: GroupContainer
+                Variant: ManualLayout
+                Properties:
+                  BorderColor: =ThBorder
+                  BorderThickness: =1
+                  DropShadow: =DropShadow.None
+                  Fill: =If(locReject.tk_timeentryid = ThisItem.tk_timeentryid, ThPrimarySoft, ThSurface)
+                  Height: =Parent.TemplateHeight - 8
+                  RadiusBottomLeft: =12
+                  RadiusBottomRight: =12
+                  RadiusTopLeft: =12
+                  RadiusTopRight: =12
+                  Width: =Parent.TemplateWidth
+                Children:
+                  - txtApprInitials:
+                      Control: ModernText
+                      Properties:
+                        AccessibleLabel: ="Initials"
+                        Align: =Align.Center
+                        Color: =ThInk
+                        Fill: =ThPrimarySoft
+                        FontWeight: =FontWeight.Semibold
+                        Height: =40
+                        RadiusBottomLeft: =20
+                        RadiusBottomRight: =20
+                        RadiusTopLeft: =20
+                        RadiusTopRight: =20
+                        Size: =14
+                        Text: =Concat(FirstN(Split(ThisItem.tk_Employee.tk_fullname, " "), 2), Left(Value, 1))
+                        Width: =40
+                        X: =16
+                        Y: =(Parent.Height - 40) / 2
+                  - cirApprDot:
+                      Control: Circle
+                      Properties:
+                        AccessibleLabel: |-
+                          ="Project colour: " & ThisItem.tk_Project.tk_projectname
+                        Fill: =ThProjectDot(ThisItem.tk_Project.tk_projectname)
+                        Height: =10
+                        TabIndex: =0
+                        Width: =10
+                        X: =72
+                        Y: =44
+                  - lblApprName:
+                      Control: Label
+                      Properties:
+                        Color: =ThInk
+                        FocusedBorderColor: =ThFocus
+                        FocusedBorderThickness: =2
+                        FontWeight: =FontWeight.Semibold
+                        Height: =24
+                        PaddingLeft: =0
+                        Size: =14
+                        TabIndex: =0
+                        Text: =ThisItem.tk_Employee.tk_fullname
+                        Width: =Parent.Width - 330
+                        X: =72
+                        Y: =12
+                  - lblApprDetail:
+                      Control: Label
+                      Properties:
+                        Color: =ThInkMuted
+                        FocusedBorderColor: =ThFocus
+                        FocusedBorderThickness: =2
+                        Height: =24
+                        PaddingLeft: =0
+                        TabIndex: =0
+                        Text: =ThisItem.tk_Project.tk_projectname & " · " & Text(ThisItem.tk_workdate, "ddd d mmm") & " (" & Text(ThisItem.tk_workdate, "yyyy-mm-dd") & ") · " & Text(ThisItem.tk_hours) & " h" & If(IsBlank(ThisItem.tk_notes), "", " · " & ThisItem.tk_notes)
+                        Width: =Parent.Width - 330
+                        X: =88
+                        Y: =36
+                  - btnApprove:
+                      Control: ModernButton
+                      Properties:
+                        AccessibleLabel: ="Approve entry"
+                        BasePaletteColor: =ThPrimary
+                        Color: =ThOnPrimary
+                        Height: =36
+                        Layout: =ButtonLayout.TextOnly
+                        OnSelect: |-
+                          =With({cur: LookUp('Time Entries', tk_timeentryid = ThisItem.tk_timeentryid)},
+                            If(cur.tk_status <> 'Status (Time Entries)'.Submitted,
+                              Notify("This entry was already decided, so nothing changed.", NotificationType.Warning); Refresh('Time Entries'),
+                              IfError(
+                                Patch('Time Entries', cur, {tk_status: 'Status (Time Entries)'.Approved, tk_approvercomment: Blank()});
+                                If(locReject.tk_timeentryid = cur.tk_timeentryid, UpdateContext({locReject: Blank()}));
+                                Notify("Approved ✓", NotificationType.Success),
+                                Notify("We couldn't approve that entry. Please try again.", NotificationType.Error))))
+                        Size: =13
+                        Text: ="Approve"
+                        Width: =110
+                        X: =Parent.Width - 244
+                        Y: =(Parent.Height - 36) / 2
+                  - btnReject:
+                      Control: ModernButton
+                      Properties:
+                        AccessibleLabel: ="Reject entry"
+                        Appearance: =ButtonAppearance.Outline
+                        BasePaletteColor: =ThChipRoseInk
+                        Color: =ThChipRoseInk
+                        Height: =36
+                        Layout: =ButtonLayout.TextOnly
+                        OnSelect: |-
+                          =UpdateContext({locReject: ThisItem, locRejectError: ""}); Reset(inpRejectComment)
+                        Size: =13
+                        Text: ="Reject"
+                        Width: =110
+                        X: =Parent.Width - 124
+                        Y: =(Parent.Height - 36) / 2
+      - conRejectPanel:
+          Control: GroupContainer
+          Variant: ManualLayout
+          Properties:
+            BorderColor: =ThBorder
+            BorderThickness: =1
+            DropShadow: =DropShadow.None
+            Fill: =ThSurface
+            Height: =184
+            RadiusBottomLeft: =12
+            RadiusBottomRight: =12
+            RadiusTopLeft: =12
+            RadiusTopRight: =12
+            Visible: =!IsBlank(locReject)
+            Width: =If(Parent.Width < 948, Parent.Width - 48, 900)
+            X: =If(Parent.Width < 948, 24, (Parent.Width - 900) / 2)
+            Y: =Parent.Height - 208
+          Children:
+            - txtRejectTitle:
+                Control: ModernText
+                Properties:
+                  AccessibleLabel: ="Rejection title"
+                  Color: =ThInk
+                  FontWeight: =FontWeight.Semibold
+                  Height: =28
+                  Size: =14
+                  Text: ="Reject " & locReject.tk_Employee.tk_fullname & "'s " & locReject.tk_Project.tk_projectname & " entry (" & Text(locReject.tk_workdate, "ddd d mmm") & ", " & Text(locReject.tk_hours) & " h)"
+                  Width: =Parent.Width - 32
+                  X: =16
+                  Y: =12
+            - inpRejectComment:
+                Control: ModernTextInput
+                Properties:
+                  AccessibleLabel: ="Rejection comment"
+                  Appearance: =Appearance.Outline
+                  BorderColor: =ThBorder
+                  Color: =ThInk
+                  Fill: =ThSurfaceAlt
+                  Height: =40
+                  Placeholder: ="Why is this entry rejected? (required)"
+                  Width: =Parent.Width - 32
+                  X: =16
+                  Y: =48
+            - txtRejectError:
+                Control: ModernText
+                Properties:
+                  AccessibleLabel: ="Rejection error"
+                  Color: =ThError
+                  Height: =24
+                  Size: =12
+                  Text: =locRejectError
+                  Visible: =!IsBlank(locRejectError)
+                  Width: =Parent.Width - 32
+                  X: =16
+                  Y: =94
+            - btnConfirmReject:
+                Control: ModernButton
+                Properties:
+                  AccessibleLabel: ="Confirm rejection"
+                  Appearance: =ButtonAppearance.Outline
+                  BasePaletteColor: =ThChipRoseInk
+                  Color: =ThChipRoseInk
+                  Height: =40
+                  Layout: =ButtonLayout.TextOnly
+                  OnSelect: |-
+                    =If(IsBlank(Trim(inpRejectComment.Text)),
+                      UpdateContext({locRejectError: "A comment is required to reject an entry"}),
+                      With({cur: LookUp('Time Entries', tk_timeentryid = locReject.tk_timeentryid)},
+                        If(cur.tk_status <> 'Status (Time Entries)'.Submitted,
+                          UpdateContext({locReject: Blank(), locRejectError: ""}); Notify("This entry was already decided, so nothing changed.", NotificationType.Warning); Refresh('Time Entries'),
+                          IfError(
+                            Patch('Time Entries', cur, {tk_status: 'Status (Time Entries)'.Rejected, tk_approvercomment: Trim(inpRejectComment.Text)});
+                            UpdateContext({locReject: Blank(), locRejectError: ""});
+                            Notify("Rejected with your comment", NotificationType.Success),
+                            UpdateContext({locRejectError: "We couldn't reject that entry. Please try again."})))))
+                  Size: =14
+                  Text: ="Reject entry"
+                  Width: =160
+                  X: =16
+                  Y: =128
+            - btnCancelReject:
+                Control: ModernButton
+                Properties:
+                  AccessibleLabel: ="Cancel rejection"
+                  Appearance: =ButtonAppearance.Secondary
+                  BasePaletteColor: =ThPrimary
+                  Color: =ThInk
+                  Height: =40
+                  Layout: =ButtonLayout.TextOnly
+                  OnSelect: |-
+                    =UpdateContext({locReject: Blank(), locRejectError: ""})
+                  Size: =14
+                  Text: ="Cancel"
+                  Width: =110
+                  X: =192
+                  Y: =128
+      - tmrApprRefresh:
+          Control: Timer
+          Properties:
+            AutoPause: =true
+            AutoStart: =true
+            Duration: =30000
+            OnTimerEnd: =If(!IsBlank(varMe), Refresh('Time Entries'))
+            Repeat: =true
+            TabIndex: =0
+            Visible: =false

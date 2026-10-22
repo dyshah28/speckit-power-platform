@@ -1,0 +1,31 @@
+{
+  "_comment": "Soft Pastel Light theme. Single source of truth for colours (contracts/ui-theme.md). App.Formulas mirrors these values.",
+  "colors": {
+    "Bg": "#F7F8FC",
+    "Surface": "#FFFFFF",
+    "SurfaceAlt": "#F1F2F9",
+    "Border": "#DADDEA",
+    "AppBar": "#E9E8F8",
+    "Primary": "#5F66B8",
+    "OnPrimary": "#FFFFFF",
+    "PrimarySoft": "#E6E8F7",
+    "FocusRing": "#7A80D0",
+    "Ink": "#2E3142",
+    "InkMuted": "#5B6075",
+    "Error": "#A3364A",
+    "ChipSky": "#DDEBF7", "ChipSkyInk": "#2F5A80",
+    "ChipPeach": "#FCE5D6", "ChipPeachInk": "#8A4A26",
+    "ChipMint": "#D5EEE3", "ChipMintInk": "#2D6650",
+    "ChipRose": "#F9DDE2", "ChipRoseInk": "#8C3343",
+    "ChipButter": "#FAF1D6", "ChipButterInk": "#6E5410"
+  },
+  "textPairs": [
+    ["Ink", "Bg"], ["Ink", "Surface"], ["Ink", "SurfaceAlt"], ["Ink", "AppBar"], ["Ink", "PrimarySoft"],
+    ["InkMuted", "Bg"], ["InkMuted", "Surface"], ["InkMuted", "SurfaceAlt"], ["InkMuted", "AppBar"],
+    ["OnPrimary", "Primary"], ["Error", "Surface"], ["Error", "SurfaceAlt"],
+    ["ChipSkyInk", "ChipSky"], ["ChipPeachInk", "ChipPeach"], ["ChipMintInk", "ChipMint"],
+    ["ChipRoseInk", "ChipRose"], ["ChipButterInk", "ChipButter"]
+  ],
+  "uiPairs": [["FocusRing", "Surface"], ["Primary", "Surface"]],
+  "pastelSurfaces": ["Bg", "SurfaceAlt", "AppBar", "PrimarySoft", "ChipSky", "ChipPeach", "ChipMint", "ChipRose", "ChipButter"]
+}

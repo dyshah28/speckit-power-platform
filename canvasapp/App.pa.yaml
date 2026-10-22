@@ -1,0 +1,66 @@
+App:
+  Properties:
+    Formulas: |-
+      =// Soft Pastel Light theme (specs/001-timekeeper-core/contracts/ui-theme.md). Hex values live only here.
+      ThBg = ColorValue("#F7F8FC");
+      ThSurface = ColorValue("#FFFFFF");
+      ThSurfaceAlt = ColorValue("#F1F2F9");
+      ThBorder = ColorValue("#DADDEA");
+      ThAppBar = ColorValue("#E9E8F8");
+      ThPrimary = ColorValue("#5F66B8");
+      ThOnPrimary = ColorValue("#FFFFFF");
+      ThPrimarySoft = ColorValue("#E6E8F7");
+      ThFocus = ColorValue("#7A80D0");
+      ThInk = ColorValue("#2E3142");
+      ThInkMuted = ColorValue("#5B6075");
+      ThError = ColorValue("#A3364A");
+      ThChipSky = ColorValue("#DDEBF7");
+      ThChipSkyInk = ColorValue("#2F5A80");
+      ThChipPeach = ColorValue("#FCE5D6");
+      ThChipPeachInk = ColorValue("#8A4A26");
+      ThChipMint = ColorValue("#D5EEE3");
+      ThChipMintInk = ColorValue("#2D6650");
+      ThChipRose = ColorValue("#F9DDE2");
+      ThChipRoseInk = ColorValue("#8C3343");
+      ThChipButter = ColorValue("#FAF1D6");
+      ThChipButterInk = ColorValue("#6E5410");
+      ThDotContoso = ColorValue("#B9C3F2");
+      ThDotFabrikam = ColorValue("#F6C9B4");
+      ThDotTraining = ColorValue("#BFE3D2");
+      ThDotOther = ColorValue("#E8D7F1");
+      ThStatusFill(s: Text): Color = Switch(s, "Draft", ThChipSky, "Submitted", ThChipPeach, "Approved", ThChipMint, ThChipRose);
+      ThStatusInk(s: Text): Color = Switch(s, "Draft", ThChipSkyInk, "Submitted", ThChipPeachInk, "Approved", ThChipMintInk, ThChipRoseInk);
+      ThProjectDot(p: Text): Color = Switch(p, "Contoso Migration", ThDotContoso, "Fabrikam Portal", ThDotFabrikam, "Internal Training", ThDotTraining, ThDotOther);
+      // Data scoped to the signed-in person (Constitution V). Blank varMe = nothing.
+      // Monday of the current week; a named formula so it never depends on OnStart having run
+      WeekStart = Today() - Weekday(Today(), StartOfWeek.Monday) + 1;
+      // DateTime form of WeekStart for Dataverse filters (Date + number doesn't delegate)
+      WeekStartTime = DateTime(Year(WeekStart), Month(WeekStart), Day(WeekStart), 0, 0, 0);
+      MyWeek = Filter('Time Entries', !IsBlank(varMe) && tk_Employee.tk_employeeid = varMe.tk_employeeid && tk_workdate >= WeekStartTime && tk_workdate < DateAdd(WeekStartTime, 7, TimeUnit.Days));
+      WeekTotal = Coalesce(Sum(MyWeek, tk_hours), 0);
+      WeekCapacity = Coalesce(varMe.tk_weeklycapacityhours, 40);
+      PendingApprovals = Filter('Time Entries', !IsBlank(varMe) && tk_status = 'Status (Time Entries)'.Submitted && tk_Employee.tk_employeeid in colDirectReports.tk_employeeid);
+      FirstName = If(IsBlank(varMe), "", First(Split(varMe.tk_fullname, " ")).Value);
+      Greeting = "Good " & If(Hour(Now()) < 12, "morning", Hour(Now()) < 17, "afternoon", "evening") & If(IsBlank(FirstName), "", ", " & FirstName);
+      SignIn(email: Text): Void = {
+        Set(varMeEmail, Lower(Trim(email)));
+        Set(varMe, LookUp(Employees, tk_email = varMeEmail));
+        ClearCollect(colActiveProjects, Filter(Projects, !IsBlank(varMe) && Active = 'Active (Projects)'.True));
+        ClearCollect(colDirectReports, Filter(Employees, !IsBlank(varMe) && tk_Manager.tk_employeeid = varMe.tk_employeeid));
+        Clear(colChat); Set(varConversationId, ""); Set(varChatEpoch, varChatEpoch + 1)
+      };
+      SignOut(): Void = {
+        Set(varMeEmail, Blank()); Set(varMe, Blank());
+        Clear(colActiveProjects); Clear(colDirectReports);
+        Clear(colChat); Set(varConversationId, ""); Set(varChatEpoch, varChatEpoch + 1)
+      };
+    OnStart: |-
+      =// Identity (Constitution V): set only by SignIn() from the email typed on Screen1. Never User().Email.
+      Set(varMeEmail, Blank());
+      Set(varMe, Blank());
+      Set(varConversationId, "");
+      Set(varChatEpoch, 0);
+      ClearCollect(colChat, {Id: 0, Role: "", Text: ""});
+      Clear(colChat)
+    StartScreen: =Screen1
+    Theme: =PowerAppsTheme

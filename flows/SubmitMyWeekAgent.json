@@ -1,0 +1,518 @@
+{
+  "properties": {
+    "connectionReferences": {
+      "shared_commondataserviceforapps": {
+        "runtimeSource": "embedded",
+        "connection": {
+          "connectionReferenceLogicalName": "tk_dataverse"
+        },
+        "api": {
+          "name": "shared_commondataserviceforapps"
+        }
+      },
+      "shared_teams": {
+        "runtimeSource": "embedded",
+        "connection": {
+          "connectionReferenceLogicalName": "tk_teams"
+        },
+        "api": {
+          "name": "shared_teams"
+        }
+      }
+    },
+    "definition": {
+      "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+      "contentVersion": "1.0.0.0",
+      "parameters": {
+        "$connections": {
+          "defaultValue": {},
+          "type": "Object"
+        },
+        "$authentication": {
+          "defaultValue": {},
+          "type": "SecureObject"
+        }
+      },
+      "triggers": {
+        "manual": {
+          "type": "Request",
+          "kind": "Skills",
+          "inputs": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "text": {
+                  "title": "employeeId",
+                  "type": "string",
+                  "x-ms-content-hint": "TEXT",
+                  "x-ms-dynamically-added": true,
+                  "description": "Employee id (GUID)"
+                }
+              },
+              "required": [
+                "text"
+              ]
+            }
+          }
+        }
+      },
+      "actions": {
+        "Get_employee": {
+          "type": "OpenApiConnection",
+          "runAfter": {},
+          "inputs": {
+            "host": {
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+              "operationId": "GetItem",
+              "connectionName": "shared_commondataserviceforapps"
+            },
+            "parameters": {
+              "entityName": "tk_employees",
+              "recordId": "@triggerBody()?['text']",
+              "$select": "tk_employeeid,tk_fullname",
+              "$expand": "tk_Manager($select=tk_email,tk_fullname)"
+            }
+          }
+        },
+        "Local_now": {
+          "type": "Compose",
+          "runAfter": {
+            "Get_employee": [
+              "Succeeded"
+            ]
+          },
+          "inputs": "@convertFromUtc(utcNow(), 'Central Standard Time')"
+        },
+        "Week_start": {
+          "type": "Compose",
+          "runAfter": {
+            "Local_now": [
+              "Succeeded"
+            ]
+          },
+          "inputs": "@convertToUtc(startOfDay(addDays(outputs('Local_now'), mul(-1, mod(add(dayOfWeek(outputs('Local_now')), 6), 7)))), 'Central Standard Time')"
+        },
+        "List_drafts": {
+          "type": "OpenApiConnection",
+          "runAfter": {
+            "Week_start": [
+              "Succeeded"
+            ]
+          },
+          "inputs": {
+            "host": {
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+              "operationId": "ListRecords",
+              "connectionName": "shared_commondataserviceforapps"
+            },
+            "parameters": {
+              "entityName": "tk_timeentries",
+              "$select": "tk_timeentryid,tk_title,tk_hours,tk_workdate",
+              "$filter": "_tk_employee_value eq @{body('Get_employee')?['tk_employeeid']} and tk_status eq 495690000 and tk_workdate ge @{outputs('Week_start')} and tk_workdate lt @{addDays(outputs('Week_start'), 7)}",
+              "$orderby": "tk_workdate asc"
+            }
+          }
+        },
+        "Init_total": {
+          "type": "InitializeVariable",
+          "runAfter": {
+            "List_drafts": [
+              "Succeeded"
+            ]
+          },
+          "inputs": {
+            "variables": [
+              {
+                "name": "total",
+                "type": "float",
+                "value": 0
+              }
+            ]
+          }
+        },
+        "Submit_each": {
+          "type": "Foreach",
+          "runAfter": {
+            "Init_manager": [
+              "Succeeded"
+            ]
+          },
+          "foreach": "@body('List_drafts')?['value']",
+          "actions": {
+            "Set_submitted": {
+              "type": "OpenApiConnection",
+              "runAfter": {},
+              "inputs": {
+                "host": {
+                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+                  "operationId": "UpdateOnlyRecord",
+                  "connectionName": "shared_commondataserviceforapps"
+                },
+                "parameters": {
+                  "entityName": "tk_timeentries",
+                  "recordId": "@items('Submit_each')?['tk_timeentryid']",
+                  "item/tk_status": 495690001
+                }
+              }
+            },
+            "Add_hours": {
+              "type": "IncrementVariable",
+              "runAfter": {
+                "Set_submitted": [
+                  "Succeeded"
+                ]
+              },
+              "inputs": {
+                "name": "total",
+                "value": "@items('Submit_each')?['tk_hours']"
+              }
+            }
+          },
+          "runtimeConfiguration": {
+            "concurrency": {
+              "repetitions": 1
+            }
+          }
+        },
+        "If_manager": {
+          "type": "If",
+          "runAfter": {
+            "Submit_each": [
+              "Succeeded"
+            ]
+          },
+          "expression": {
+            "and": [
+              {
+                "greater": [
+                  "@length(body('List_drafts')?['value'])",
+                  0
+                ]
+              },
+              {
+                "not": {
+                  "equals": [
+                    "@coalesce(body('Get_employee')?['tk_Manager']?['tk_email'], '')",
+                    ""
+                  ]
+                }
+              }
+            ]
+          },
+          "actions": {
+            "Card_facts": {
+              "type": "Select",
+              "runAfter": {},
+              "inputs": {
+                "from": "@body('List_drafts')?['value']",
+                "select": {
+                  "title": "@{formatDateTime(convertFromUtc(item()?['tk_workdate'], 'Central Standard Time'), 'ddd d MMM')}",
+                  "value": "@{item()?['tk_title']} · @{item()?['tk_hours']} h"
+                }
+              }
+            },
+            "Card": {
+              "type": "Compose",
+              "runAfter": {
+                "Card_facts": [
+                  "Succeeded"
+                ]
+              },
+              "inputs": {
+                "type": "AdaptiveCard",
+                "version": "1.4",
+                "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
+                "body": [
+                  {
+                    "type": "TextBlock",
+                    "size": "Medium",
+                    "weight": "Bolder",
+                    "text": "Timesheet waiting for your approval"
+                  },
+                  {
+                    "type": "TextBlock",
+                    "wrap": true,
+                    "text": "@{body('Get_employee')?['tk_fullname']} submitted @{length(body('List_drafts')?['value'])} entries (@{variables('total')} h) for the week of @{formatDateTime(convertFromUtc(outputs('Week_start'), 'Central Standard Time'), 'ddd d MMM')}."
+                  },
+                  {
+                    "type": "FactSet",
+                    "facts": "@body('Card_facts')"
+                  },
+                  {
+                    "type": "TextBlock",
+                    "wrap": true,
+                    "isSubtle": true,
+                    "text": "Approve or reject the whole week here, or one entry at a time in Timekeeper, Approvals."
+                  },
+                  {
+                    "type": "Input.Text",
+                    "id": "comment",
+                    "isMultiline": true,
+                    "placeholder": "Comment (required to reject)"
+                  }
+                ],
+                "actions": [
+                  {
+                    "type": "Action.Submit",
+                    "title": "Approve week",
+                    "style": "positive",
+                    "data": {
+                      "submitAction": "Approved"
+                    }
+                  },
+                  {
+                    "type": "Action.Submit",
+                    "title": "Reject week",
+                    "style": "destructive",
+                    "data": {
+                      "submitAction": "Rejected"
+                    }
+                  }
+                ]
+              }
+            },
+            "Set_manager": {
+              "type": "SetVariable",
+              "runAfter": {
+                "Card": [
+                  "Succeeded"
+                ]
+              },
+              "inputs": {
+                "name": "manager",
+                "value": "@{body('Get_employee')?['tk_Manager']?['tk_fullname']}"
+              }
+            }
+          },
+          "else": {
+            "actions": {}
+          }
+        },
+        "Respond": {
+          "type": "Response",
+          "kind": "Skills",
+          "runAfter": {
+            "If_manager": [
+              "Succeeded",
+              "Failed"
+            ]
+          },
+          "inputs": {
+            "statusCode": 200,
+            "body": {
+              "submitted": "@{length(body('List_drafts')?['value'])}",
+              "hours": "@{variables('total')}",
+              "manager": "@{variables('manager')}"
+            },
+            "schema": {
+              "type": "object",
+              "properties": {
+                "submitted": {
+                  "title": "submitted",
+                  "type": "string",
+                  "x-ms-dynamically-added": true
+                },
+                "hours": {
+                  "title": "hours",
+                  "type": "string",
+                  "x-ms-dynamically-added": true
+                },
+                "manager": {
+                  "title": "manager",
+                  "type": "string",
+                  "x-ms-dynamically-added": true
+                }
+              }
+            }
+          }
+        },
+        "Init_manager": {
+          "type": "InitializeVariable",
+          "runAfter": {
+            "Init_total": [
+              "Succeeded"
+            ]
+          },
+          "inputs": {
+            "variables": [
+              {
+                "name": "manager",
+                "type": "string",
+                "value": ""
+              }
+            ]
+          }
+        },
+        "If_wait": {
+          "type": "If",
+          "runAfter": {
+            "Respond": [
+              "Succeeded"
+            ]
+          },
+          "expression": {
+            "not": {
+              "equals": [
+                "@variables('manager')",
+                ""
+              ]
+            }
+          },
+          "actions": {
+            "Post_and_wait": {
+              "type": "OpenApiConnectionWebhook",
+              "runAfter": {},
+              "inputs": {
+                "host": {
+                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_teams",
+                  "operationId": "PostCardAndWaitForResponse",
+                  "connectionName": "shared_teams"
+                },
+                "parameters": {
+                  "poster": "Flow bot",
+                  "location": "Chat with Flow bot",
+                  "body/body/messageBody": "@{outputs('Card')}",
+                  "body/body/updateMessage": "Thanks, your decision was recorded in Timekeeper.",
+                  "body/body/recipient/to": "@{body('Get_employee')?['tk_Manager']?['tk_email']}"
+                }
+              }
+            },
+            "Decision": {
+              "type": "Compose",
+              "runAfter": {
+                "Post_and_wait": [
+                  "Succeeded"
+                ]
+              },
+              "inputs": "@body('Post_and_wait')?['data']?['submitAction']"
+            },
+            "Comment": {
+              "type": "Compose",
+              "runAfter": {
+                "Decision": [
+                  "Succeeded"
+                ]
+              },
+              "inputs": "@trim(coalesce(body('Post_and_wait')?['data']?['comment'], ''))"
+            },
+            "If_reject_without_comment": {
+              "type": "If",
+              "runAfter": {
+                "Comment": [
+                  "Succeeded"
+                ]
+              },
+              "expression": {
+                "and": [
+                  {
+                    "equals": [
+                      "@outputs('Decision')",
+                      "Rejected"
+                    ]
+                  },
+                  {
+                    "equals": [
+                      "@outputs('Comment')",
+                      ""
+                    ]
+                  }
+                ]
+              },
+              "actions": {
+                "Tell_comment_required": {
+                  "type": "OpenApiConnection",
+                  "runAfter": {},
+                  "inputs": {
+                    "host": {
+                      "apiId": "/providers/Microsoft.PowerApps/apis/shared_teams",
+                      "operationId": "PostMessageToConversation",
+                      "connectionName": "shared_teams"
+                    },
+                    "parameters": {
+                      "poster": "Flow bot",
+                      "location": "Chat with Flow bot",
+                      "body/recipient": "@{body('Get_employee')?['tk_Manager']?['tk_email']}",
+                      "body/messageBody": "<p>Nothing was rejected for @{body('Get_employee')?['tk_fullname']}: a rejection needs a comment. Use Timekeeper, Approvals.</p>"
+                    }
+                  }
+                }
+              },
+              "else": {
+                "actions": {
+                  "Decide_each": {
+                    "type": "Foreach",
+                    "runAfter": {},
+                    "foreach": "@body('List_drafts')?['value']",
+                    "runtimeConfiguration": {
+                      "concurrency": {
+                        "repetitions": 1
+                      }
+                    },
+                    "actions": {
+                      "Get_current": {
+                        "type": "OpenApiConnection",
+                        "runAfter": {},
+                        "inputs": {
+                          "host": {
+                            "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+                            "operationId": "GetItem",
+                            "connectionName": "shared_commondataserviceforapps"
+                          },
+                          "parameters": {
+                            "entityName": "tk_timeentries",
+                            "recordId": "@items('Decide_each')?['tk_timeentryid']",
+                            "$select": "tk_status"
+                          }
+                        }
+                      },
+                      "If_still_submitted": {
+                        "type": "If",
+                        "runAfter": {
+                          "Get_current": [
+                            "Succeeded"
+                          ]
+                        },
+                        "expression": {
+                          "equals": [
+                            "@body('Get_current')?['tk_status']",
+                            495690001
+                          ]
+                        },
+                        "actions": {
+                          "Set_decision": {
+                            "type": "OpenApiConnection",
+                            "runAfter": {},
+                            "inputs": {
+                              "host": {
+                                "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+                                "operationId": "UpdateOnlyRecord",
+                                "connectionName": "shared_commondataserviceforapps"
+                              },
+                              "parameters": {
+                                "entityName": "tk_timeentries",
+                                "recordId": "@items('Decide_each')?['tk_timeentryid']",
+                                "item/tk_status": "@if(equals(outputs('Decision'), 'Approved'), 495690002, 495690003)",
+                                "item/tk_approvercomment": "@{if(equals(outputs('Decision'), 'Approved'), '', outputs('Comment'))}"
+                              }
+                            }
+                          }
+                        },
+                        "else": {
+                          "actions": {}
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "else": {
+            "actions": {}
+          }
+        }
+      }
+    }
+  },
+  "schemaVersion": "1.0.0.0"
+}
